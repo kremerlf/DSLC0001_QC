@@ -1,2 +1,2 @@
 # DSLC0001_QC
-Code assignments from QC 
+code assignments from QC 

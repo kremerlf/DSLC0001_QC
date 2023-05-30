@@ -4,7 +4,6 @@ from copy import deepcopy as cp
 
 import numpy as np
 
-
 class Qb:
     """Qubit definitions and methods"""
 
@@ -91,65 +90,3 @@ class Qb:
 
     def __str__(self):
         return f"|{self.basis}>"
-
-
-class User:
-    def __init__(self):
-        self.bit_choice = list()
-        self.base_choice = list()
-        self.states = list()
-        self.key = list()
-
-    def stream_gen(self, nbits: int) -> None:
-        """generates the random qbits to be sended"""
-        for i in range(nbits):
-            bit = choice(["0", "1", "+", "-"])
-            self.bit_choice.append(bit)
-            self.states.append(Qb(1, bit))
-            base = choice(["X", "Z"])
-            self.base_choice.append(base)
-            Qb.measure(self.states[i], base)
-
-    def measure(self, stream: list[Qb]) -> None:
-        self.states = stream
-
-        for i, j in enumerate(self.states):
-            base = choice(["X", "Z"])
-            self.base_choice.append(base)
-            Qb.measure(self.states[i], base)
-
-    def key_gen(self, x: User) -> None:
-        # compares basis choice
-        cc = Comms.choice_check(self, x)
-
-        for i in range(len(cc)):
-            if cc[i] == 1:
-                if np.array_equal(
-                    self.states[i].basis_vec, Qb.basis_vec["0"]
-                ) or np.array_equal(self.states[i].basis_vec, Qb.basis_vec["+"]):
-                    self.key.append(0)
-                else:
-                    self.key.append(1)
-
-
-class Comms:
-    """Public communication channel"""
-
-    @classmethod
-    def send(cls, x: User) -> list[Qb]:
-        return cp(x.states)
-
-    @classmethod
-    def choice_check(cls, x: User, y: User) -> list[int]:
-        return [
-            1 if x.base_choice[i] == y.base_choice[i] else 0
-            for i, j in enumerate(x.base_choice)
-        ]
-
-    @classmethod
-    def random_key_test(cls, x: User, y: User) -> tuple[int, str]:
-        key_sample = sample(range(len(x.key)), int(len(x.key) / 2))
-        for i in key_sample:
-            if x.key[i] != y.key[i]:
-                return (1, "Got noise!!!")
-        return (0, "all ok")

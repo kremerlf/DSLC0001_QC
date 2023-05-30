@@ -9,24 +9,18 @@ class Qb:
     """Qubit definitions and methods"""
 
     basis_vec = {
-        "0": np.matrix([[1], 
-						[0]]),
-        "1": np.matrix([[0], 
-						[1]]),
-        "+": np.matrix([[1 / np.sqrt(2)], 
-						[1 / np.sqrt(2)]]),
-        "-": np.matrix([[1 / np.sqrt(2)], 
-						[-1 / np.sqrt(2)]]),
+        "0": np.matrix([[1], [0]]),
+        "1": np.matrix([[0], [1]]),
+        "+": np.matrix([[1 / np.sqrt(2)], [1 / np.sqrt(2)]]),
+        "-": np.matrix([[1 / np.sqrt(2)], [-1 / np.sqrt(2)]]),
     }
     gates = {
-        "X": np.matrix([[0, 1], 
-						[1, 0]]),
-        "Y": np.matrix([[0, complex("-j")], 
-						[complex("j"), 0]]),
-        "Z": np.matrix([[1, 0], 
-						[0, -1]]),
-        "H": np.matrix([[1 / np.sqrt(2), 1 / np.sqrt(2)], 
-						[1 / np.sqrt(2), -1 / np.sqrt(2)]]),
+        "X": np.matrix([[0, 1], [1, 0]]),
+        "Y": np.matrix([[0, complex("-j")], [complex("j"), 0]]),
+        "Z": np.matrix([[1, 0], [0, -1]]),
+        "H": np.matrix(
+            [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)]]
+        ),
     }
     projectors = {
         "Z": [

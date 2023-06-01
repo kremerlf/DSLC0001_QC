@@ -109,8 +109,8 @@ normalize v = (1 / norm v :+ 0) *>> v
 
 norm :: Basis a => QV a -> Double
 norm v = 
-  let probs = Data.Map.map ((\a -> a * a) . magnitude) (elems v) -- ?????????
- in sqrt (sum probs)
+  let probs = [((\a -> a * a) . magnitude) x | x <- elems v] -- works with just a comprehension
+  in sqrt (sum probs)
 
 
 

@@ -1,19 +1,18 @@
 module Quantum where
 
-
 import Data.List
 import Data.Map
 import Data.Complex
-
---data Bool = False | True
 
 data Move = Vertical | Horizontal deriving (Show,Eq,Ord)
 data Rotation = CtrClockwise | Clockwise deriving (Show,Eq)
 data Color = Red | Yellow | Blue deriving (Show,Eq)
 
+data Qop a b = Qop (Map (a,b) PA)
 
+-- Basis will also be an instance of Eq and Ord
 class (Eq a, Ord a) => Basis a where
-     basis :: [a]
+     basis :: [a] -- :: == has type
 
 instance Basis Bool where
   basis = [False, True]
@@ -21,47 +20,46 @@ instance Basis Bool where
 instance Basis Move where
   basis = [Vertical,Horizontal]
 
--- [ | ] list comprehension functional: no loops!!
 instance (Basis a,Basis b) => Basis (a,b)
-   where basis = [(a,b) | a <- basis, b <- basis]
+   where basis = [(a,b) | a <- basis, b <- basis] --comprehension
 
-type PA = Complex Double
 
-type QV a = Map a PA
+type PA = Complex Double --prob amp type
+type QV a = Map a PA --quantum values as (a, PA)
 
 
 qv :: (Basis a) => [(a,PA)] -> QV a 
-qv = fromList
+qv = fromList --expects a list of QV
 
 qFT :: QV Bool
-qFT = qv [(False,1/sqrt(2)),(True,1/sqrt(2))]
+qFT = qv [(False,1/sqrt(2)),(True,1/sqrt(2))] -- |+>
 
 pr :: (Basis a) => QV a -> a -> PA
-pr q b = findWithDefault 0 b q
+pr q b = findWithDefault 0 b q -- return PA, if ! return 0
+-- use ex: pr qFT False
 
+-- examples:
 qFalse, qTrue :: QV Bool
-qFalse = Data.Map.singleton False 1
-qTrue = Data.Map.singleton True 1
-
+qFalse = Data.Map.singleton False 1 -- |0>
+qTrue = Data.Map.singleton True 1 -- |1>
 
 p1,p2,p3 :: QV (Bool,Bool)
-p1 = qv [((False,False),1),((False,True),1)]
-p2 = qv [((False,False),1),((True,True),1)]
+p1 = qv [((False,False),1),((False,True),1)] -- |00> + |01>
+p2 = qv [((False,False),1),((True,True),1)] -- |00> + |11>
 p3 = qv [((False,False),1),
          ((False,True),1),
          ((True,False),1),
-         ((True,True),1)]
+         ((True,True),1)] -- |00> + |01> + |10> + |11>
+----
 
 -- Produto Tensorial
 (&*) :: (Basis a, Basis b) => QV a -> QV b -> QV (a,b)
 qa &* qb = qv[((a,b), pr qa a * pr qb b)|a <- basis, b <- basis]         
 
-
 -- Operações quânticas como funções
-
 qnot_f :: QV Bool -> QV Bool
 qnot_f v = qv [(False, pr v True),
-               (True, pr v False)]
+               (True, pr v False)] -- why return a PA = 0 element??
 
 
 hadamard_f :: QV Bool -> QV Bool
@@ -69,13 +67,50 @@ hadamard_f v = let p = pr v False
                    q = pr v True
                in qv[(False,p+q),(True,p-q)]    
 
+-- Matrix operations
+qop :: (Basis a, Basis b) => [((a,b), PA)] -> Qop a b
+qop = Qop . fromList -- (.) == function composition
 
+qApp :: (Basis a, Basis b) => Qop a b -> QV a -> QV b
+qApp (Qop m) v = 
+  let bF b  = sum [ pr m (a,b) * pr v a | a <- basis]
+  in qv [(b, bF b) | b <- basis]
 
+qnot_op = 
+  qop [
+    ((False,True),1),
+    ((True,False),1)
+  ]
 
+hadamard_op = 
+  qop [
+    ((False,False),1),
+    ((False,True),1),
+    ((True,False),1),
+    ((True,True),-1)
+  ]
 
+cop :: (Basis a , Basis b) => (a -> Bool) -> Qop b b -> Qop (a,b) (a,b)
+cop enable (Qop u) = 
+  qop(
+    [(((a,b),(a,b)),1) | (a,b) <- basis, not (enable a)] ++
+    [(((a,b1),(a,b2)), pr u (b1, b2)) 
+     |a <- basis, enable a, b1 <- basis, b2 <- basis]
+  ) -- (++) list append
 
+cnot :: Qop (Bool,Bool) (Bool,Bool)
+cnot = cop id qnot_op -- how to use??
 
+(*>>) :: Basis a => PA -> QV a -> QV a -- (*>) complained: already defined
+c *>> v = Data.Map.map (\a -> c * a) v
 
+normalize :: Basis a => QV a -> QV a
+normalize v = (1 / norm v :+ 0) *>> v
+
+norm :: Basis a => QV a -> Double
+norm v = 
+  let probs = Data.Map.map ((\a -> a * a) . magnitude) (elems v) -- ??????
+  in sqrt(sum probs)
 
 
 

@@ -102,7 +102,7 @@ cnot :: Qop (Bool,Bool) (Bool,Bool)
 cnot = cop id qnot_op -- how to use??
 
 (*>>) :: Basis a => PA -> QV a -> QV a -- (*>) complained: already defined
-c *>> v = Data.Map.mapWithKey (\a -> c * a) v
+c *>> v = Data.Map.map (\a -> c * a) v
 
 normalize :: Basis a => QV a -> QV a
 normalize v = (1 / norm v :+ 0) *>> v

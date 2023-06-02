@@ -4,6 +4,7 @@ import Data.List
 import Data.Map
 import Data.Complex
 import Data.IORef
+import System.Random
 
 data Move = Vertical | Horizontal deriving (Show,Eq,Ord)
 data Rotation = CtrClockwise | Clockwise deriving (Show,Eq)
@@ -25,10 +26,8 @@ instance Basis Move where
 instance (Basis a,Basis b) => Basis (a,b)
    where basis = [(a,b) | a <- basis, b <- basis] --comprehension
 
-
 type PA = Complex Double --prob amp type
 type QV a = Map a PA --quantum values as (a, PA)
-
 
 qv :: (Basis a) => [(a,PA)] -> QV a 
 qv = fromList --expects a list of QV
@@ -119,26 +118,28 @@ mkQR :: QV a -> IO (QR a)
 mkQR v = do
   r <- newIORef v
   return (QR r)
-
+--{-
 observeR :: Basis a => QR a -> IO a
 observeR (QR ptr) = do
   v <- readIORef ptr
   res <- observeV v
-  writeIORef ptr ()
+  writeIORef ptr (Data.Map.singleton res 1)
   return res
 
-observeV :: Basis a => QV a -> IO a
-ovserveV = do
+observeV ::  Basis a => QV a -> IO a
+observeV v = do
   let nv = normalize v
-    probs = Data.Map.map ()
+      probs = [(((\a -> a * a) . magnitude) . pr nv) basis | basis <- keys v]
   r <- getStdRandom (randomR (0.0,1.0))
   let cPsCs = zip (scanl1 (+) probs) basis
-    Just (_,res) = find (\(p,_) -> r < p) cPsCs
-  return rest
+      Just (_,res) = find (\(p,_) -> r < p) cPsCs
+  print probs
+  return res
 
 test = do
   x <- mkQR qFT
   o1 <- observeR x
   o2 <- observeR x
   o3 <- observeR x
-  print (o1,o2,o3)
+  print (o1,o2,o3) 
+-- -}

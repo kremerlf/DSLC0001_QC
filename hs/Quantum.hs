@@ -3,12 +3,14 @@ module Quantum where
 import Data.List
 import Data.Map
 import Data.Complex
+import Data.IORef
 
 data Move = Vertical | Horizontal deriving (Show,Eq,Ord)
 data Rotation = CtrClockwise | Clockwise deriving (Show,Eq)
 data Color = Red | Yellow | Blue deriving (Show,Eq)
 
 data Qop a b = Qop (Map (a,b) PA)
+data QR a = QR (IORef (QV a))
 
 -- Basis will also be an instance of Eq and Ord
 class (Eq a, Ord a) => Basis a where
@@ -112,5 +114,31 @@ norm v =
   let probs = [((\a -> a * a) . magnitude) x | x <- elems v] -- works with just a comprehension
   in sqrt (sum probs)
 
+--4.5
+mkQR :: QV a -> IO (QR a)
+mkQR v = do
+  r <- newIORef v
+  return (QR r)
 
+observeR :: Basis a => QR a -> IO a
+observeR (QR ptr) = do
+  v <- readIORef ptr
+  res <- observeV v
+  writeIORef ptr ()
+  return res
 
+observeV :: Basis a => QV a -> IO a
+ovserveV = do
+  let nv = normalize v
+    probs = Data.Map.map ()
+  r <- getStdRandom (randomR (0.0,1.0))
+  let cPsCs = zip (scanl1 (+) probs) basis
+    Just (_,res) = find (\(p,_) -> r < p) cPsCs
+  return rest
+
+test = do
+  x <- mkQR qFT
+  o1 <- observeR x
+  o2 <- observeR x
+  o3 <- observeR x
+  print (o1,o2,o3)

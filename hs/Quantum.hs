@@ -6,6 +6,8 @@ import Data.Complex
 import Data.IORef
 import System.Random
 
+
+-- 2.1
 data Move = Vertical | Horizontal deriving (Show,Eq,Ord)
 data Rotation = CtrClockwise | Clockwise deriving (Show,Eq)
 data Color = Red | Yellow | Blue deriving (Show,Eq)
@@ -44,6 +46,7 @@ qFalse, qTrue :: QV Bool
 qFalse = Data.Map.singleton False 1 -- |0>
 qTrue = Data.Map.singleton True 1 -- |1>
 
+-- 2.3
 p1,p2,p3 :: QV (Bool,Bool)
 p1 = qv [((False,False),1),((False,True),1)] -- |00> + |01>
 p2 = qv [((False,False),1),((True,True),1)] -- |00> + |11>
@@ -57,6 +60,8 @@ p3 = qv [((False,False),1),
 (&*) :: (Basis a, Basis b) => QV a -> QV b -> QV (a,b)
 qa &* qb = qv[((a,b), pr qa a * pr qb b)|a <- basis, b <- basis]         
 
+
+-- 3
 -- Operações quânticas como funções
 qnot_f :: QV Bool -> QV Bool
 qnot_f v = qv [(False, pr v True),
@@ -91,6 +96,7 @@ hadamard_op =
     ((True,True),-1)
   ]
 
+-- 3.2
 cop :: (Basis a , Basis b) => (a -> Bool) -> Qop b b -> Qop (a,b) (a,b)
 cop enable (Qop u) = 
   qop(
@@ -99,6 +105,8 @@ cop enable (Qop u) =
      |a <- basis, enable a, b1 <- basis, b2 <- basis]
   ) -- (++) list append
 
+
+-- 4.1
 cnot :: Qop (Bool,Bool) (Bool,Bool)
 cnot = cop id qnot_op -- how to use??
 

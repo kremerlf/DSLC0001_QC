@@ -106,10 +106,13 @@ cop enable (Qop u) =
   ) -- (++) list append
 
 
--- 4.1
 cnot :: Qop (Bool,Bool) (Bool,Bool)
 cnot = cop id qnot_op -- how to use??
 
+toffoli :: Qop ((Bool,Bool), Bool) ((Bool,Bool), Bool)
+toffoli = cop (uncurry (&&)) qnot_op
+
+-- 4.1
 (*>>) :: Basis a => PA -> QV a -> QV a -- (*>) complained: already defined
 c *>> v = Data.Map.map (\a -> c * a) v
 
@@ -118,7 +121,7 @@ normalize v = (1 / norm v :+ 0) *>> v
 
 norm :: Basis a => QV a -> Double
 norm v = 
-  let probs = [((\a -> a * a) . magnitude) x | x <- elems v] -- works with just a comprehension
+  let probs = [((\a -> a * a) . magnitude) x | x <- elems v] -- works with a comprehension
   in sqrt (sum probs)
 
 --4.5
@@ -126,7 +129,7 @@ mkQR :: QV a -> IO (QR a)
 mkQR v = do
   r <- newIORef v
   return (QR r)
---{-
+
 observeR :: Basis a => QR a -> IO a
 observeR (QR ptr) = do
   v <- readIORef ptr
@@ -137,7 +140,7 @@ observeR (QR ptr) = do
 observeV ::  Basis a => QV a -> IO a
 observeV v = do
   let nv = normalize v
-      probs = [(((\a -> a * a) . magnitude) . pr nv) basis | basis <- keys v]
+      probs = [(((\x -> x * x) . magnitude) . pr nv) basis | basis <- keys v]
   r <- getStdRandom (randomR (0.0,1.0))
   let cPsCs = zip (scanl1 (+) probs) basis
       Just (_,res) = find (\(p,_) -> r < p) cPsCs
@@ -150,4 +153,19 @@ test = do
   o2 <- observeR x
   o3 <- observeR x
   print (o1,o2,o3) 
+
+
+-- {-
+observeLeft :: (Basis a, Basis b) => QR (a,b) -> IO a
+observeLeft (QR ptr) = do
+  v <- readIORef ptr
+  let leftF a = sqrt (sum [((\x -> x * x) . magnitude) pr v (a,b) | b <- basis])
+      leftV = qv [ (a, leftF a) | a <- basis]
+  aobs <- observeV leftV
+  let nv = qv [((aobs,b), pr v (aobs,b)) | b <- basis]
+  writeIORef ptr (normalize nv)
+  return aobs 
 -- -}
+
+-- 5
+

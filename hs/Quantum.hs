@@ -54,7 +54,6 @@ p3 = qv [((False,False),1),
          ((False,True),1),
          ((True,False),1),
          ((True,True),1)] -- |00> + |01> + |10> + |11>
-----
 
 -- Produto Tensorial
 (&*) :: (Basis a, Basis b) => QV a -> QV b -> QV (a,b)
@@ -79,7 +78,7 @@ qop = Qop . fromList -- (.) == function composition
 
 qApp :: (Basis a, Basis b) => Qop a b -> QV a -> QV b
 qApp (Qop m) v = 
-  let bF b  = sum [ pr m (a,b) * pr v a | a <- basis]
+  let bF b  = sum [pr m (a,b) * pr v a | a <- basis]
   in qv [(b, bF b) | b <- basis]
 
 qnot_op = 
@@ -95,6 +94,9 @@ hadamard_op =
     ((True,False),1),
     ((True,True),-1)
   ]
+
+opLift :: (Basis a, Basis b) => (a -> b) -> Qop a b
+opLift f = qop [((a, f a), 1) | a <- basis]
 
 -- 3.2
 cop :: (Basis a , Basis b) => (a -> Bool) -> Qop b b -> Qop (a,b) (a,b)
@@ -140,11 +142,12 @@ observeR (QR ptr) = do
 observeV ::  Basis a => QV a -> IO a
 observeV v = do
   let nv = normalize v
-      probs = [(((\x -> x * x) . magnitude) . pr nv) basis | basis <- keys v]
+      probs = Data.List.map (((\x -> x * x) . magnitude) . pr nv) basis
+      --probs = [(((\x -> x * x) . magnitude) . pr nv) basis | basis <- keys v]
+	  -- wrong comprehension
   r <- getStdRandom (randomR (0.0,1.0))
   let cPsCs = zip (scanl1 (+) probs) basis
       Just (_,res) = find (\(p,_) -> r < p) cPsCs
-  print probs
   return res
 
 test = do
@@ -155,11 +158,12 @@ test = do
   print (o1,o2,o3) 
 
 
--- {-
+--{-
+-- NOT WORKING
 observeLeft :: (Basis a, Basis b) => QR (a,b) -> IO a
 observeLeft (QR ptr) = do
   v <- readIORef ptr
-  let leftF a = sqrt (sum [((\x -> x * x) . magnitude) pr v (a,b) | b <- basis])
+  let leftF a = sqrt (sum [((\x -> x * x) . magnitude) (pr v (a,b)) | b <- basis])
       leftV = qv [ (a, leftF a) | a <- basis]
   aobs <- observeV leftV
   let nv = qv [((aobs,b), pr v (aobs,b)) | b <- basis]

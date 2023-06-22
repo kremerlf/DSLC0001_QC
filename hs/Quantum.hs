@@ -164,7 +164,7 @@ observeLeft :: (Basis a, Basis b) => QR (a,b) -> IO a
 observeLeft (QR ptr) = do
   v <- readIORef ptr
   let leftF a = sqrt (sum [((\x -> x * x) . magnitude) (pr v (a,b)) | b <- basis])
-      leftV = qv [ (a, leftF a) | a <- basis]
+      leftV = qv [(a, leftF a) | a <- basis]
   aobs <- observeV leftV
   let nv = qv [((aobs,b), pr v (aobs,b)) | b <- basis]
   writeIORef ptr (normalize nv)
